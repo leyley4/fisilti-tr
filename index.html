@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fısıltı TR – Sessiz Konuşma Arayüzü</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f3f1ec;--fg:#1d2330;--mut:#5d6575;--card:#fff;--line:#d9d5cc;--ac:#0e7c86;--ac2:#c2410c;--ch1:#0e7c86;--ch2:#7c3aed;--ch3:#c2410c;--ch4:#15803d}
+:root[data-theme=dark]{--bg:#12161d;--fg:#e8ebf0;--mut:#98a1b2;--card:#1a202a;--line:#2b3340;--ac:#4fd1c5;--ac2:#fb923c;--ch1:#4fd1c5;--ch2:#a78bfa;--ch3:#fb923c;--ch4:#6ee7a0}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12161d;--fg:#e8ebf0;--mut:#98a1b2;--card:#1a202a;--line:#2b3340;--ac:#4fd1c5;--ac2:#fb923c;--ch1:#4fd1c5;--ch2:#a78bfa;--ch3:#fb923c;--ch4:#6ee7a0}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 "Source Serif 4",Georgia,serif}
+h1,h2,h3,button,label,.sans{font-family:"Space Grotesk",system-ui,sans-serif}
+.w{max-width:960px;margin:0 auto;padding:0 20px}
+header{padding:56px 0 28px}
+h1{font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;margin:0 0 16px;letter-spacing:-.03em}
+h1 i{font-style:normal;color:var(--ac)}
+.lead{max-width:60ch;color:var(--mut);font-size:1.12rem}
+h2{font-size:1.5rem;margin:40px 0 12px;letter-spacing:-.01em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+canvas{width:100%;height:190px;display:block;background:var(--bg);border-radius:6px;border:1px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=text]{flex:1;min-width:200px;padding:12px 14px;font:inherit;font-size:1.05rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+button{font-size:.95rem;padding:10px 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:600}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ac2);outline-offset:2px}
+.chips{margin:10px 0 0}.chips button{padding:5px 11px;font-size:.85rem;border-radius:99px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.g2{grid-template-columns:1fr}}
+.lg span{display:inline-block;margin-right:14px;font-size:.85rem}
+.lg b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+.out div{padding:6px 0;border-bottom:1px dashed var(--line)}
+.out small{color:var(--mut);display:block;font-family:"Space Grotesk",sans-serif}
+.big{font-size:1.5rem;font-family:"Space Grotesk",sans-serif;font-weight:600}
+.scr{background:#0b1117;color:#e8ebf0;border-radius:14px;padding:16px;min-height:210px;font-family:"Space Grotesk",sans-serif;position:relative;overflow:hidden}
+.scr .bar{font-size:.75rem;color:#8b95a5;display:flex;justify-content:space-between;margin-bottom:12px}
+.scr .app{background:#18212c;border-radius:10px;padding:12px;margin-bottom:8px;font-size:.95rem}
+.lamp{position:absolute;right:14px;bottom:12px;width:22px;height:22px;border-radius:50%;background:#2a3340;transition:.3s}
+.lamp.on{background:#fde047;box-shadow:0 0 24px #fde047}
+.bars{display:flex;gap:8px;align-items:flex-end;height:60px}
+.bars div{flex:1;border-radius:4px 4px 0 0;min-height:3px;transition:height .4s}
+table{width:100%;border-collapse:collapse;font-size:.92rem}td,th{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tag{font-family:"Space Grotesk",sans-serif;font-size:.8rem;color:var(--ac)}
+footer{padding:40px 0;color:var(--mut);font-size:.9rem}
+.ok{color:var(--ch4)}.bad{color:var(--ac2)}
+</style></head><body>
+<div class="w">
+<header>
+<p class="tag">Fısıltı TR · The Subvocal Company (YC Fall 2026) klonu + Türkçe yerelleştirme</p>
+<h1>Bilgisayarla konuş.<br><i>Ağzını açmadan.</i></h1>
+<p class="lead">Çene, dudak ve dil kaslarının elektriksel izlerini (sEMG) okuyup sessizce söylediğin komutu Türkçe olarak çözen bir arayüz. Aşağıda donanımın simülasyonu çalışıyor: bir komut seç, sinyali izle, çözümlemeyi gör.</p>
+</header>
+
+<h2>Canlı demo</h2>
+<div class="card">
+<div class="row"><input id="ph" type="text" value="müzik aç" aria-label="Sessizce söylenecek ifade" autocomplete="off"><button class="p" id="go">Sessizce söyle</button></div>
+<div class="chips" id="chips"></div>
+<div class="row" style="margin-top:14px">
+<label>Elektrot gürültüsü <input id="nz" type="range" min="0" max="100" value="35"> <b id="nzv">35%</b></label>
+<label>Ortam sesi <input id="amb" type="range" min="30" max="100" value="75"> <b id="ambv">75 dB</b></label>
+<button id="th" aria-label="Tema">Tema</button></div>
+<canvas id="cv" width="900" height="190" style="margin-top:12px"></canvas>
+<div class="lg sans" style="margin-top:8px"><span><b style="background:var(--ch1)"></b>Dudak</span><span><b style="background:var(--ch2)"></b>Çene</span><span><b style="background:var(--ch3)"></b>Dil</span><span><b style="background:var(--ch4)"></b>Gırtlak</span></div>
+</div>
+
+<div class="g2" style="margin-top:16px">
+<div class="card out">
+<div><small>1 · Ham çözümleme (harf harf)</small><span class="big" id="raw">–</span></div>
+<div><small>2 · Türkçe dil modeli düzeltmesi</small><span class="big" id="fix">–</span></div>
+<div><small>Eylem</small><span id="act">–</span></div>
+<div class="row sans" style="padding-top:8px;gap:22px">
+<span>Ham doğruluk <b id="m1">–</b></span><span>Düzeltilmiş <b id="m2">–</b></span><span>Gecikme <b id="m3">–</b></span></div>
+</div>
+<div class="scr" aria-live="polite"><div class="bar"><span id="clk">09:41</span><span>Fısıltı TR</span></div><div id="scr"><div class="app">Bir komut söyle. Dudaklarını bile kıpırdatmana gerek yok.</div></div><div class="lamp" id="lamp"></div></div>
+</div>
+
+<h2>Neden sessiz? Ses asistanı vs. sessiz arayüz</h2>
+<div class="card">
+<p style="margin-top:0">Ortam sesi arttıkça sesli asistanın doğruluğu düşer. Sessiz arayüz kas sinyali okuduğu için ortam sesinden etkilenmez; onu yalnızca elektrot gürültüsü etkiler.</p>
+<div class="bars"><div id="b1" style="background:var(--ac2)"></div><div id="b2" style="background:var(--ac)"></div></div>
+<div class="row sans" style="gap:30px;margin-top:6px"><span>Sesli asistan <b id="v1"></b></span><span>Fısıltı TR <b id="v2"></b></span></div>
+</div>
+
+<h2>Bu neden “teknolojik deprem”?</h2>
+<p>YC Güz 2026 kohortunda yer alan The Subvocal Company, sesin hızında ama tamamen sessiz bir giriş yöntemi vaat ediyor. Klavye ve ekranın ardından en büyük sıçrama, düşünceyle komut arasındaki mesafeyi sıfıra yaklaştırmak. Toplantıda, otobüste, kütüphanede ya da konuşamayan kullanıcı için erişilebilirlik olarak aynı cihaz çalışır. Takım üç kişi ve Head of ML, Sensing, Hardware arıyor; yani alan henüz açık.</p>
+
+<h2>Klon + yenilik</h2>
+<table>
+<tr><th>Katman</th><th>Orijinal fikir</th><th>Fısıltı TR</th></tr>
+<tr><td>Sinyal</td><td>Sessiz konuşma sensörü</td><td>4 kanallı sEMG simülasyonu (dudak, çene, dil, gırtlak)</td></tr>
+<tr><td>Çözümleme</td><td>Genel dil modeli</td><td>Türkçe fonetik yazım sayesinde harf düzeyinde çözümleme (29 harf, 1 harf = 1 ses)</td></tr>
+<tr><td>Düzeltme</td><td>–</td><td>Türkçe komut sözlüğü üzerinde Levenshtein mesafesi ile yeniden sıralama; eşleşme yoksa serbest dikte</td></tr>
+<tr><td>Yerelleştirme</td><td>–</td><td>Türkçe komutlar, ı/i ve ö/ü ayrımları, ünlü benzeşmesine duyarlı kas profilleri</td></tr>
+<tr><td>Mahremiyet</td><td>Çevredekiler duymaz</td><td>Cihaz üzerinde işleme; ses hiç kaydedilmez</td></tr>
+<tr><td>Erişilebilirlik</td><td>–</td><td>Ses telleri zarar görmüş veya sesli konuşamayan kullanıcılar için Türkçe iletişim modu</td></tr>
+</table>
+
+<h2>Mimari</h2>
+<div class="card sans">Elektrot (4 kanal) → harf başına kas vektörü → gürültü → en yakın komşu sınıflandırıcı → Türkçe sözlük düzeltmesi → komut yürütücü. Bu demo donanımı simüle eder; gerçek cihazda ikinci ve üçüncü aşama bir sinir ağı ile değişir.</div>
+<footer>Ödev: Hacker News / YC / RFS incelemesinden seçilen ürünün yerelleştirilmiş sürümü. Veriler simülasyondur.</footer>
+</div>
+
+<script>
+const L={a:[.1,.9,.3,.5],e:[.1,.6,.7,.5],ı:[.1,.3,.2,.5],i:[.1,.3,.9,.5],o:[.7,.7,.2,.5],ö:[.7,.6,.7,.5],u:[.9,.3,.2,.5],ü:[.9,.3,.8,.5],b:[1,.1,.1,.6],p:[1,.1,.1,.1],m:[.9,.1,.1,.9],v:[.6,.2,.1,.7],f:[.6,.2,.1,.2],d:[.1,.3,.8,.7],t:[.1,.3,.8,.1],n:[.1,.2,.9,.9],l:[.1,.3,1,.8],r:[.1,.3,.9,.6],s:[.1,.2,.7,.2],z:[.1,.2,.7,.7],ş:[.3,.2,.6,.2],j:[.3,.2,.6,.7],c:[.2,.3,.6,.7],ç:[.2,.3,.6,.1],k:[.1,.4,.1,.1],g:[.1,.4,.1,.7],ğ:[.1,.4,.2,.5],h:[.1,.5,.2,.2],y:[.1,.3,.8,.6]};
+const CMD=["saat kaç","müzik aç","not al","ışığı kapat","ışığı aç","alarm kur","hava nasıl","mesaj gönder","toplantı başlat","sesi kıs"];
+const COL=["--ch1","--ch2","--ch3","--ch4"];
+const $=id=>document.getElementById(id);
+const tr=s=>s.toLocaleLowerCase("tr");
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)};
+function lev(a,b){const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];}for(let j=1;j<=b.length;j++)d[0][j]=j;
+for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
+function nearest(v){let best="",bd=1e9;for(const k in L){let s=0;for(let i=0;i<4;i++)s+=(L[k][i]-v[i])**2;if(s<bd){bd=s;best=k}}return best}
+const cv=$("cv"),cx=cv.getContext("2d");
+let segs=[],t0=0,anim=null;
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function draw(now){
+const W=cv.width,H=cv.height;cx.clearRect(0,0,W,H);
+const T=(now-t0)/1000,per=.11,tot=segs.length*per;
+for(let c=0;c<4;c++){
+const y0=H/8+c*H/4;cx.strokeStyle=css(COL[c]);cx.lineWidth=1.2;cx.beginPath();
+for(let x=0;x<W;x++){const tt=x/W*Math.max(tot,1.2)+0;let amp=0;
+const idx=Math.floor(tt/per);if(idx<segs.length&&tt<=T){amp=segs[idx][c]}
+const y=y0+(Math.sin(x*1.7+c)*.5+Math.random()-.5)*amp*H/5+(Math.random()-.5)*2;
+x?cx.lineTo(x,y):cx.moveTo(x,y)}cx.stroke()}
+if(T<Math.max(tot,1.2)+.1)anim=requestAnimationFrame(draw)}
+function run(){
+const text=tr($("ph").value.trim());if(!text)return;
+const nz=$("nz").value/100*.45;segs=[];let rawS="",truth="";
+for(const ch of text){
+if(ch==" "){segs.push([0,0,0,0]);rawS+=" ";truth+=" ";continue}
+if(!L[ch])continue;
+const v=L[ch].map(x=>Math.max(0,x+gauss()*nz));segs.push(v);rawS+=nearest(v);truth+=ch}
+t0=performance.now();cancelAnimationFrame(anim);anim=requestAnimationFrame(draw);
+// düzeltme
+let best=null,bd=1e9;for(const c of CMD){const d=lev(rawS,c);if(d<bd){bd=d;best=c}}
+const ok=best&&bd<=Math.max(2,Math.ceil(best.length*.3));
+const fixed=ok?best:rawS;
+const acc=(a,b)=>Math.round(100*(1-lev(a,b)/Math.max(a.length,b.length,1)));
+$("raw").textContent=rawS||"–";$("fix").textContent=fixed||"–";
+$("m1").textContent=acc(rawS,truth)+"%";$("m2").textContent=acc(fixed,truth)+"%";
+$("m3").textContent=Math.round(truth.length*28+35)+" ms";
+$("act").innerHTML=ok?'<span class="ok">Komut: '+best+'</span>':'<span class="bad">Komut bulunamadı. Not olarak kaydedildi.</span>';
+exec(ok?best:null,fixed)}
+const lamp=$("lamp");
+function exec(c,txt){
+const s=$("scr");const add=h=>{s.innerHTML='<div class="app">'+h+'</div>'+s.innerHTML};
+const now=new Date();const hh=now.toTimeString().slice(0,5);
+if(!c){add("📝 Not: “"+txt.replace(/</g,"&lt;")+"”");return}
+const m={"saat kaç":"🕒 Saat "+hh,"müzik aç":"🎵 Çalıyor: Sabah Çayı (lo-fi)","not al":"📝 Yeni not açıldı, dikte hazır","ışığı kapat":"💡 Işık kapatıldı","ışığı aç":"💡 Işık açıldı","alarm kur":"⏰ Alarm 07:00 için kuruldu","hava nasıl":"⛅ 21°C, parçalı bulutlu (örnek veri)","mesaj gönder":"✉️ Mesaj taslağı açıldı","toplantı başlat":"📹 Toplantı mikrofonsuz katıldı","sesi kıs":"🔉 Ses %20"};
+if(c=="ışığı aç")lamp.classList.add("on");if(c=="ışığı kapat")lamp.classList.remove("on");
+add(m[c])}
+function amb(){const a=+$("amb").value;$("ambv").textContent=a+" dB";$("nzv").textContent=$("nz").value+"%";
+const v=Math.max(8,Math.round(98-Math.max(0,a-45)*1.45));const s=Math.round(Math.max(55,97-$("nz").value*.35));
+$("b1").style.height=v*.6+"px";$("b2").style.height=s*.6+"px";$("v1").textContent=v+"%";$("v2").textContent=s+"%"}
+CMD.forEach(c=>{const b=document.createElement("button");b.textContent=c;b.onclick=()=>{$("ph").value=c;run()};$("chips").appendChild(b)});
+$("go").onclick=run;$("ph").onkeydown=e=>{if(e.key=="Enter")run()};
+$("nz").oninput=$("amb").oninput=amb;
+$("th").onclick=()=>{const r=document.documentElement;const d=r.dataset.theme?r.dataset.theme=="dark":matchMedia("(prefers-color-scheme:dark)").matches;r.dataset.theme=d?"light":"dark"};
+setInterval(()=>$("clk").textContent=new Date().toTimeString().slice(0,5),5000);$("clk").textContent=new Date().toTimeString().slice(0,5);
+amb();
+</script></body></html>
